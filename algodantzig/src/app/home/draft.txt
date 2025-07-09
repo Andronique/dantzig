@@ -1,0 +1,353 @@
+'use client'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { RotateCcw, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { useCallback, useState } from 'react';
+import ReactFlow, { 
+  Node, 
+  addEdge, 
+  Background, 
+  Controls, 
+  useNodesState, 
+  useEdgesState, 
+  Connection,
+  Edge 
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+
+// Définir les nœuds par défaut (positions approximatives basées sur l'image)
+const initialNodes: Node[] = [
+  { id: "1", data: { label: "X 1" }, position: { x: 0, y: 0 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#4CAF50", color: "white" } },
+  { id: "2", data: { label: "X 2" }, position: { x: 40, y: 400 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#2196F3", color: "white" } },
+  { id: "3", data: { label: "X 3" }, position: { x: 100, y: 500 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#FF9800", color: "white" } },
+  { id: "4", data: { label: "X 4" }, position: { x: 50, y: 300 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "5", data: { label: "X 5" }, position: { x: 150, y: 200 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "6", data: { label: "X 6" }, position: { x: 250, y: 350 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "7", data: { label: "X 7" }, position: { x: 350, y: 400 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "8", data: { label: "X 8" }, position: { x: 300, y: 250 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "9", data: { label: "X 9" }, position: { x: 200, y: 100 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "10", data: { label: "X 10" }, position: { x: 350, y: 100 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "11", data: { label: "X 11" }, position: { x: 400, y: 500 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "12", data: { label: "X 12" }, position: { x: 450, y: 150 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "13", data: { label: "X 13" }, position: { x: 500, y: 400 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "14", data: { label: "X 14" }, position: { x: 550, y: 350 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "15", data: { label: "X 15" }, position: { x: 500, y: 200 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+  { id: "16", data: { label: "X 16" }, position: { x: 600, y: 250 }, style: { borderRadius: "50%", width: 60, height: 60, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", background: "#E91E63", color: "white" } },
+];
+
+// Définir les arêtes par défaut (basées sur l'image)
+const initialEdges: Edge[] = [
+  { id: "e1-2", source: "1", target: "2", label: "10", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e2-4", source: "2", target: "4", label: "8", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e2-3", source: "2", target: "3", label: "15", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e3-6", source: "3", target: "6", label: "1", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e3-11", source: "3", target: "11", label: "16", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e4-3", source: "4", target: "3", label: "8", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e4-5", source: "4", target: "5", label: "6", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e5-9", source: "5", target: "9", label: "1", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e6-5", source: "6", target: "5", label: "5", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e6-7", source: "6", target: "7", label: "4", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e7-8", source: "7", target: "8", label: "1", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e7-11", source: "7", target: "11", label: "8", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e8-7", source: "8", target: "7", label: "1", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e8-10", source: "8", target: "10", label: "2", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e9-8", source: "9", target: "8", label: "3", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e9-10", source: "9", target: "10", label: "6", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e10-12", source: "10", target: "12", label: "7", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e11-12", source: "11", target: "12", label: "6", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e11-13", source: "11", target: "13", label: "2", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e12-15", source: "12", target: "15", label: "9", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e13-14", source: "13", target: "14", label: "4", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e15-14", source: "15", target: "14", label: "5", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e14-16", source: "14", target: "16", label: "3", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+  { id: "e15-16", source: "15", target: "16", label: "6", labelStyle: { fill: '#000', fontWeight: 700 }, style: { stroke: '#000' } },
+];
+
+export default function Home() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [sourceNode, setSourceNode] = useState('');
+  const [targetNode, setTargetNode] = useState('');
+  const [edgeValue, setEdgeValue] = useState('');
+  const [optimalPathEdges, setOptimalPathEdges] = useState<string[]>([]);
+
+  const onConnect = useCallback((connection: Connection) => {
+    const edge = { ...connection, id: `${edges.length + 1}` };
+    setEdges((prevEdges) => addEdge(edge, prevEdges));
+  }, [edges]);
+
+  const getNextNodeId = () => {
+    const existingIds = nodes.map((node) => parseInt(node.id, 10));
+    return (Math.max(...existingIds) + 1).toString();
+  };
+
+  const addNode = useCallback(() => {
+    const newId = getNextNodeId();
+    const newNode = {
+      id: newId,
+      data: { label: `X ${newId}` },
+      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      style: { 
+        borderRadius: "50%", 
+        width: 60, 
+        height: 60, 
+        textAlign: "center", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center",
+        background: "#E91E63", 
+        color: "white" 
+      }
+    };
+    setNodes((prevNodes) => [...prevNodes, newNode]);
+  }, [nodes]);
+
+  const addOrUpdateEdge = () => {
+    if (sourceNode && targetNode && edgeValue) {
+      const sourceExists = nodes.some(node => node.id === sourceNode);
+      const targetExists = nodes.some(node => node.id === targetNode);
+
+      if (!sourceExists || !targetExists) {
+        alert("Un ou plusieurs nœuds saisis n'existent pas !");
+        return;
+      }
+
+      const existingEdge = edges.find(e => 
+        e.source === sourceNode && e.target === targetNode
+      );
+      
+      if (existingEdge) {
+        setEdges(prevEdges => prevEdges.map(edge => 
+          edge.id === existingEdge.id ? { ...edge, label: edgeValue } : edge
+        ));
+      } else {
+        const newEdge = {
+          id: `e${sourceNode}-${targetNode}`,
+          source: sourceNode,
+          target: targetNode,
+          label: edgeValue,
+          labelStyle: { fill: '#000', fontWeight: 700 },
+          style: { stroke: '#000' }
+        };
+        setEdges(prevEdges => [...prevEdges, newEdge]);
+      }
+      setSourceNode('');
+      setTargetNode('');
+      setEdgeValue('');
+    } else {
+      alert("Veuillez remplir tous les champs !");
+    }
+  };
+
+  const onEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    setSourceNode(edge.source);
+    setTargetNode(edge.target);
+    setEdgeValue(edge.label?.toString() || '');
+  }, []);
+
+  // Fonction pour calculer le chemin le plus court avec l'algorithme de Dijkstra
+  const calculateShortestPath = (nodes: Node[], edges: Edge[]) => {
+    const distances: { [key: string]: number } = {};
+    const predecessors: { [key: string]: string | null } = {};
+    
+    // Initialisation
+    nodes.forEach(node => {
+      distances[node.id] = node.id === "1" ? 0 : Infinity; // Source = X 1
+      predecessors[node.id] = null;
+    });
+
+    const unvisited = new Set(nodes.map(node => node.id));
+
+    while (unvisited.size > 0) {
+      let current = null;
+      let minDist = Infinity;
+      for (const nodeId of unvisited) {
+        if (distances[nodeId] < minDist) {
+          minDist = distances[nodeId];
+          current = nodeId;
+        }
+      }
+
+      if (current === null) break;
+      unvisited.delete(current);
+
+      const outgoingEdges = edges.filter(edge => edge.source === current);
+      for (const edge of outgoingEdges) {
+        const neighbor = edge.target;
+        const cost = parseInt(edge.label?.toString() || "0");
+        const newDist = distances[current] + cost;
+
+        if (newDist < distances[neighbor]) {
+          distances[neighbor] = newDist;
+          predecessors[neighbor] = current;
+        }
+      }
+    }
+
+    return { distances, predecessors };
+  };
+
+  // Fonction pour retracer le chemin optimal
+  const getOptimalPath = (predecessors: { [key: string]: string | null }, start: string, end: string) => {
+    const path: string[] = [];
+    let current: string | null = end;
+
+    while (current !== null) {
+      path.push(current);
+      current = predecessors[current];
+    }
+
+    if (path[path.length - 1] !== start) {
+      return []; // Aucun chemin trouvé
+    }
+
+    return path.reverse();
+  };
+
+  // Fonction pour exécuter l'algorithme de Dantzig et tracer le chemin optimal (Minimisation)
+  const handleCalculateShortestPath = () => {
+    const { distances, predecessors } = calculateShortestPath(nodes, edges);
+
+    // Mettre à jour les labels des nœuds avec les distances λ
+    const updatedNodes = nodes.map((node) => ({
+      ...node,
+      data: { 
+        label: `${node.data.label} (λ${node.id}=${distances[node.id] === Infinity ? '∞' : distances[node.id]})` 
+      },
+    }));
+    setNodes(updatedNodes);
+
+    // Trouver le chemin optimal de X 1 à X 16
+    const path = getOptimalPath(predecessors, "1", "16");
+
+    if (path.length === 0) {
+      alert("Aucun chemin trouvé entre X 1 et X 16 !");
+      return;
+    }
+
+    // Identifier les arêtes du chemin optimal
+    const pathEdges = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const source = path[i];
+      const target = path[i + 1];
+      const edge = edges.find((e) => e.source === source && e.target === target);
+      if (edge) pathEdges.push(edge.id);
+    }
+
+    // Mettre à jour les arêtes pour colorer le chemin optimal en rouge
+    const updatedEdges = edges.map((edge) => ({
+      ...edge,
+      style: pathEdges.includes(edge.id) ? { stroke: "red", strokeWidth: 2 } : { stroke: "#000" },
+    }));
+    setEdges(updatedEdges);
+    setOptimalPathEdges(pathEdges);
+
+    // Afficher le chemin et le coût total
+    const totalCost = distances["16"] === Infinity ? "∞" : distances["16"];
+    alert(`Chemin optimal : ${path.map(id => `X ${id}`).join(" -> ")}\nCoût total : ${totalCost}`);
+  };
+
+  // Fonction pour réinitialiser le graphe
+  const resetGraph = () => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    setSourceNode('');
+    setTargetNode('');
+    setEdgeValue('');
+    setOptimalPathEdges([]);
+  };
+
+  return (
+    <div className="flex flex-col h-screen p-2 space-y-2">
+      <div className="grid grid-cols-[5fr_3fr_2fr] gap-4">
+        {/* Formulaire Ajout et Liaison */}
+        <div className="border rounded-lg shadow-lg p-4 bg-white">
+          <h2 className="text-lg font-semibold mb-3">Ajout des nœuds et de leurs liaisons pour créer un schéma</h2>
+          <div className="flex items-center space-x-2 gap-2">
+            <Button onClick={addNode}>
+              <Plus className="h-5 w-5 mr-2" />
+              Ajouter un sommet
+            </Button>
+          </div>
+        </div>
+
+        {/* Ajout valeur de l'arc */}
+        <div className="border rounded-lg shadow-lg p-4 bg-white">
+          <h2 className="text-lg font-semibold mb-3">Ajout d'une valeur à un arc</h2>
+          <div className="flex items-center space-x-2 gap-2">
+            <Input 
+              className="border-[#353030]" 
+              placeholder="x 1" 
+              value={sourceNode}
+              onChange={(e) => setSourceNode(e.target.value)}
+            />
+            <Input 
+              className="border-[#353030]" 
+              placeholder="val" 
+              value={edgeValue}
+              onChange={(e) => setEdgeValue(e.target.value)}
+            />
+            <Input 
+              className="border-[#272020]" 
+              placeholder="x 2" 
+              value={targetNode}
+              onChange={(e) => setTargetNode(e.target.value)}
+            />
+            <Button onClick={addOrUpdateEdge}>
+              <Plus className="h-5 w-5 m-2" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Cadre Calculer */}
+        <div className="border rounded-lg shadow-lg p-4 flex flex-col bg-white">
+          <h2 className="text-lg font-semibold mb-3">Calcul</h2>
+          <div className="flex gap-2 space-x-2">
+            <Button
+            
+              className="flex items-center bg-[#4CAF50] hover:bg-[#388E3C] text-white transition duration-300"
+              style={{ borderRadius: "8px", padding: "0.75rem 1rem" }}
+            >
+              <ArrowUp className="mr-1 inline-block" size={18} />
+              Maximisation
+            </Button>
+            <Button
+              onClick={handleCalculateShortestPath}
+              className="flex items-center bg-[#2196F3] hover:bg-[#1976D2] text-white transition duration-300"
+              style={{ borderRadius: "8px", padding: "0.75rem 1rem" }}
+            >
+              <ArrowDown className="mr-1 inline-block" size={18} />
+              Minimisation
+            </Button>
+            <Button
+              onClick={resetGraph}
+              className="flex items-center bg-[#D32F2F] hover:bg-[#B71C1C] text-white transition duration-300"
+              style={{ borderRadius: "8px", padding: "0.75rem 1rem" }}
+            >
+              <RotateCcw className="mr-1 inline-block" size={18} />
+              Reset
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Espace Graphique */}
+      <div className=" flex-1 border rounded-lg shadow-lg bg-gray-100">
+        <div className=' w-full h-full'>
+          <ReactFlow 
+            nodes={nodes} 
+            edges={edges}   
+            onNodesChange={onNodesChange} 
+            onEdgesChange={onEdgesChange} 
+            onConnect={onConnect}
+            onEdgeClick={onEdgeClick}
+            fitView
+          > 
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
+      </div>
+    </div>
+  );
+}
