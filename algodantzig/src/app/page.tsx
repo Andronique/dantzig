@@ -10,7 +10,7 @@ export default function Home() {
       <div className="flex items-center flex-col justify-center h-screen text-center">
         <h1
           className="font-[family-name:var(--font-geist-sans)] px-4 py-2 text-4xl font-extrabold" >
-          Algorithme de Dantzig :<br /> Maximisation et Minimisation
+          Algorithme de Dantzig :<br /> Maximisation et  Minimisation
         </h1>
         <Link href="/home">
           <Button className="cursor-pointer">
